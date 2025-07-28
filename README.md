@@ -1,16 +1,8 @@
-# FRI timetable scraper for custom frontends
+# Terminal timetable viewer
+Made using rust and ratatui.
+Supports timetables from my scraper API.
+[Github Link](https://github.com/kashregister/FRI-timetable-api)
 
-This is a rust rewrite based on plojyon's project.
+## Keybinds
+r - refresh
 
-[Github Link](https://github.com/plojyon/timetable_scraper/tree/master)
-
-## Endpoints
-
-```
-/ root
-/timetable/{uni}/{group}
-```
-
-Currently supported:\
-
-- FRI
