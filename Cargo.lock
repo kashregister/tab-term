@@ -1224,6 +1224,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "tab-term"
+version = "1.0.0"
+dependencies = [
+ "color-eyre",
+ "crossterm",
+ "dirs",
+ "futures",
+ "rand",
+ "ratatui",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tokio",
+ "ureq",
+]
+
+[[package]]
 name = "thiserror"
 version = "2.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1363,23 +1380,6 @@ dependencies = [
  "sharded-slab",
  "thread_local",
  "tracing-core",
-]
-
-[[package]]
-name = "ttime"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "crossterm",
- "dirs",
- "futures",
- "rand",
- "ratatui",
- "serde",
- "serde_derive",
- "serde_json",
- "tokio",
- "ureq",
 ]
 
 [[package]]
