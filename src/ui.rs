@@ -4,10 +4,11 @@ use ratatui::{
     layout::{Alignment, Rect},
     prelude::*,
     style::{Color, Stylize},
-    widgets::{Block, BorderType, Clear, Paragraph, Widget},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Widget, Wrap},
 };
 
 use crate::app::App;
+use crate::app::Warning;
 
 fn map_idx_to_time(index: usize) -> usize {
     index + 7
@@ -27,7 +28,7 @@ impl Widget for &App {
             .direction(Direction::Horizontal)
             .constraints({
                 let mut constraints = Vec::new();
-                for i in 0..5 {
+                for _ in 0..5 {
                     constraints.push(Constraint::Percentage(20));
                 }
                 constraints
@@ -41,7 +42,7 @@ impl Widget for &App {
                     .direction(Direction::Vertical)
                     .constraints({
                         let mut constraints = Vec::new();
-                        for i in 0..ROW_DISPLAY_COUNT {
+                        for _ in 0..ROW_DISPLAY_COUNT {
                             constraints.push(Constraint::Percentage(20));
                         }
                         constraints
@@ -50,12 +51,12 @@ impl Widget for &App {
             );
         }
 
-        for (d, column) in rows_layout.iter().enumerate() {
+        for column in rows_layout.iter() {
             for h in 0..ROW_DISPLAY_COUNT {
                 let block = Block::bordered()
                     .title("")
                     .title_alignment(Alignment::Center)
-                    .border_type(BorderType::Rounded);
+                    .border_type(BorderType::Plain);
 
                 let paragraph = Paragraph::new("")
                     .block(block)
@@ -71,13 +72,13 @@ impl Widget for &App {
                 .timetable_data
                 .clone()
                 .into_iter()
-                .filter(|block| block.dan as usize == d)
+                .filter(|block| block.day as usize == d)
                 .collect::<Vec<TimeBlock>>();
             for h in 0..ROW_DISPLAY_COUNT {
                 let blocks_time_filtered = blocks_filtered
                     .clone()
                     .into_iter()
-                    .filter(|block| block.ura as usize == map_idx_to_time(h))
+                    .filter(|block| block.time as usize == map_idx_to_time(h))
                     .collect::<Vec<TimeBlock>>();
                 if !blocks_time_filtered.is_empty() {
                     let subject_color = {
@@ -85,27 +86,27 @@ impl Widget for &App {
                             .colors
                             .clone()
                             .iter()
-                            .filter(|t| t.0 == blocks_time_filtered[0].predmet.name)
+                            .filter(|t| t.0 == blocks_time_filtered[0].subject.name)
                             .collect::<Vec<_>>()[0]
                             .1;
                         i
                     };
                     let block = Block::bordered()
                         .title({
-                            if blocks_time_filtered[0].trajanje > 0 {
-                                format!("{}:00", &blocks_time_filtered[0].ura)
+                            if blocks_time_filtered[0].duration > 0 {
+                                format!("{}:00", &blocks_time_filtered[0].time)
                             } else {
                                 "".to_string()
                             }
                         })
                         .title_alignment(Alignment::Center)
-                        .border_type(BorderType::Rounded)
+                        .border_type(BorderType::Plain)
                         .border_style(Style::default().fg(subject_color));
 
                     let joined_area = {
                         let mut joined_area = column[h as usize];
-                        if blocks_time_filtered[0].trajanje > 1 {
-                            for c in 1..blocks_time_filtered[0].trajanje {
+                        if blocks_time_filtered[0].duration > 1 {
+                            for c in 1..blocks_time_filtered[0].duration {
                                 joined_area = joined_area.union(column[(h as usize) + c as usize]);
                             }
                         }
@@ -113,13 +114,13 @@ impl Widget for &App {
                     };
                     let paragraph = Paragraph::new({
                         let b = blocks_time_filtered[0].clone();
-                        if b.trajanje > 0 {
+                        if b.duration > 0 {
                             format!(
                                 "{}\n\
                                     {}\n\
                                     {}\n\
                                     Ucilnica: {}",
-                                &b.profesor, &b.predmet.name, &b.tip, &b.ucilnica
+                                &b.professor, &b.subject.name, &b.subject.r#type, &b.classroom
                             )
                         } else {
                             "".to_string()
@@ -134,6 +135,38 @@ impl Widget for &App {
                     paragraph.clone().render(joined_area, buf);
                 } else {
                 }
+            }
+            if let Some(warn_data) = self.warning.clone() {
+                let popup_area = Rect {
+                    x: area.width / 4,
+                    y: area.height / 3,
+                    width: area.width / 2,
+                    height: area.height / 3,
+                };
+
+                if popup_area.height < 1 {
+                    return;
+                }
+
+                Clear.render(popup_area, buf);
+
+                let help_block = Block::new()
+                    .title(warn_data.title)
+                    .title_style(Style::new().white().bold())
+                    .borders(Borders::ALL)
+                    .border_style(Style::new().fg(warn_data.color));
+                Paragraph::new(warn_data.message)
+                    .style(Style::new())
+                    .block(help_block)
+                    .render(popup_area, buf);
+
+                let mut hint_popup_area = popup_area;
+                hint_popup_area.y += popup_area.height - 1;
+                hint_popup_area.x += 1;
+
+                Paragraph::new(warn_data.bottom_hint)
+                    .alignment(Alignment::Left)
+                    .render(hint_popup_area, buf);
             }
         }
     }
