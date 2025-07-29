@@ -128,14 +128,24 @@ impl App {
                                                 message: "Too many requests...".into(),
                                                 title: "Error".into(),
                                                 color: Color::Yellow,
-                                                bottom_hint: "Press <Esc> to close window".into(),
+                                                bottom_hint: "Press <Esc> to close the window"
+                                                    .into(),
                                             });
                                         } else if code == 404 {
                                             self.warning = Some(Warning {
                                                 message: "Page not found".into(),
                                                 title: "Error".into(),
                                                 color: Color::Red,
-                                                bottom_hint: "Press <Esc> to close window".into(),
+                                                bottom_hint: "Press <Esc> to close the window"
+                                                    .into(),
+                                            });
+                                        } else if code == 408 {
+                                            self.warning = Some(Warning {
+                                                message: "Request timed out...".into(),
+                                                title: "Error".into(),
+                                                color: Color::Red,
+                                                bottom_hint: "Press <Esc> to close the window"
+                                                    .into(),
                                             });
                                         }
                                     }
@@ -146,7 +156,7 @@ impl App {
                                                 .into(),
                                             title: "Error".into(),
                                             color: Color::Red,
-                                            bottom_hint: "Press <Esc> to close window".into(),
+                                            bottom_hint: "Press <Esc> to close the window".into(),
                                         });
                                     }
                                 }
@@ -174,7 +184,7 @@ impl App {
                                     message: ret,
                                     title: "Error".into(),
                                     color: Color::Red,
-                                    bottom_hint: "Press <Esc> to close window".into(),
+                                    bottom_hint: "Press <Esc> to close the window".into(),
                                 });
                             }
                         }

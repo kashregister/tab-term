@@ -119,7 +119,7 @@ impl Widget for &App {
                                 "{}\n\
                                     {}\n\
                                     {}\n\
-                                    Ucilnica: {}",
+                                    Classroom: {}",
                                 &b.professor, &b.subject.name, &b.subject.r#type, &b.classroom
                             )
                         } else {
