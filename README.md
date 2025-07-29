@@ -1,7 +1,7 @@
 # Terminal timetable viewer
 Made using rust and ratatui.
 Supports timetables from my scraper API.\
-[Github Link](https://github.com/kashregister/FRI-timetable-api)
+[Github Link](https://github.com/kashregister/timetable-scraper-api)
 
 ## Keybinds
 Esc - close popups\
