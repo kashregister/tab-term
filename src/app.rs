@@ -77,13 +77,17 @@ impl Default for App {
 }
 
 impl TimeBlock {
+    // TODO: Make the api trim the type
     pub fn format_block(&self) -> String {
         format!(
             "{}\n\
         {}\n\
-        {}\n\
-        Classroom: {}",
-            &self.professor, &self.subject.name, &self.subject.r#type, &self.classroom,
+        Type: {}\n\
+        Loc: {}",
+            &self.professor,
+            &self.subject.name,
+            &self.subject.r#type.trim(),
+            &self.classroom,
         )
     }
 }

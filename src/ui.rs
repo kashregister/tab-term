@@ -1,21 +1,21 @@
-use crate::app::{Subject, TimeBlock, Warning};
+use crate::app::{Subject, TimeBlock};
+use ratatui::layout::Rect;
 use ratatui::{
     buffer::Buffer,
-    layout::Rect,
     prelude::*,
-    style::Color,
+    style::{Color, Stylize},
     widgets::{Block, BorderType, Borders, Paragraph, Widget},
 };
 
 use crate::app::App;
 
 const ROW_DISPLAY_COUNT: usize = 21 - 7;
-const ROW_CONSTRAINT_PERCENTAGE: u16 = (100 / ROW_DISPLAY_COUNT) as u16 - 1;
+const ROW_CONSTRAINT_PERCENTAGE: u16 = (100.0 / ROW_DISPLAY_COUNT as f32) as u16 - 1;
 fn map_idx_to_time(index: usize) -> usize {
     index + 7
 }
 
-fn get_color(sub: Subject, c_list: &Vec<(String, Color)>) -> Color {
+fn get_color(sub: &Subject, c_list: &Vec<(String, Color)>) -> Color {
     for i in c_list {
         if i.0 == sub.name {
             return i.1;
@@ -23,15 +23,33 @@ fn get_color(sub: Subject, c_list: &Vec<(String, Color)>) -> Color {
     }
     Color::Red
 }
-fn group_by_time(blocks: &Vec<TimeBlock>) -> Vec<Vec<TimeBlock>> {
-    let mut out: Vec<_> = Vec::new();
-    for h in 0..ROW_DISPLAY_COUNT {
-        let blocks_time_filtered = blocks
+// First vec is for each day
+// Second vec is for each hour
+// Third is for all the subjects on that same hour and day
+fn group_by_time(blocks: &Vec<TimeBlock>) -> Vec<Vec<Vec<TimeBlock>>> {
+    let mut out: Vec<Vec<_>> = Vec::new();
+    let mut day_filtered: Vec<_> = Vec::new();
+    for d in 0..5 {
+        let blocks_day_filtered = blocks
             .clone()
             .into_iter()
-            .filter(|block| block.time == map_idx_to_time(h))
+            .filter(|block| block.day == d)
             .collect::<Vec<TimeBlock>>();
-        out.push(blocks_time_filtered);
+        day_filtered.push(blocks_day_filtered);
+    }
+    for d in day_filtered {
+        let mut tmp = Vec::new();
+        for h in 0..ROW_DISPLAY_COUNT {
+            let blocks_time_filtered = d
+                .clone()
+                .into_iter()
+                .filter(|block| block.time == map_idx_to_time(h))
+                .collect::<Vec<TimeBlock>>();
+            if !blocks_time_filtered.is_empty() {
+                tmp.push(blocks_time_filtered);
+            }
+        }
+        out.push(tmp);
     }
     out
 }
@@ -70,36 +88,48 @@ impl Widget for &App {
                     .split(columns_layout[column]),
             );
         }
-
-        let blocks_grouped = group_by_time(&self.timetable_data);
-        for i in 0..4 {
-            for time_group in blocks_grouped.iter().filter(|b| !b.is_empty()) {
-                let area_render = rows_layout[time_group[0].day][time_group[0].time - 7];
-                let constraint_perc = 100 / time_group.len() as u16;
-                let group_area = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints({
-                        let mut constraints = Vec::new();
-                        for _ in 0..time_group.len() {
-                            constraints.push(Constraint::Percentage(constraint_perc));
-                        }
-                        constraints
-                    })
-                    .split(area_render);
-                for (i, block) in time_group.iter().enumerate() {
-                    let block_render = Block::default()
-                        .border_type(BorderType::Plain)
-                        .borders(Borders::ALL);
-                    _ = Paragraph::new(block.format_block())
-                        .block(block_render)
-                        .bg(Color::Red)
-                        .render(group_area[i], buf);
-                }
-            }
+        for col in columns_layout.iter() {
+            Paragraph::default()
+                .block(Block::default().borders(Borders::ALL))
+                .fg(Color::DarkGray)
+                .render(*col, buf);
         }
 
-        if self.warning.is_some() {
-            _ = Warning::default();
+        let blocks_grouped = group_by_time(&self.timetable_data);
+        for (d, day) in blocks_grouped.iter().enumerate() {
+            for hour in day {
+                for (b, block) in hour.iter().enumerate() {
+                    // If the class is longer than 1h, merge the rows
+                    let idx = block.time - 7;
+                    let mut area_render = rows_layout[d][idx];
+                    if block.duration > 1 {
+                        area_render = area_render.union(rows_layout[d][idx + (block.duration - 1)]);
+                    }
+                    // By how many columns will the cell be split up
+                    let split_by = hour.len();
+                    // Get the right constraints by dividing 100% with the above
+                    let split_area = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints({
+                            let mut constraints = Vec::new();
+                            for _ in 0..split_by {
+                                constraints
+                                    .push(Constraint::Percentage((100.0 / split_by as f32) as u16));
+                            }
+                            constraints
+                        })
+                        .split(area_render);
+                    // Render the block in its own column
+                    let block_render = Block::default()
+                        .border_type(BorderType::Plain)
+                        .fg(get_color(&block.subject, &self.colors))
+                        .title(format!("{}:00", &block.time))
+                        .borders(Borders::ALL);
+                    Paragraph::new(block.format_block())
+                        .block(block_render)
+                        .render(split_area[b], buf);
+                }
+            }
         }
     }
 }
