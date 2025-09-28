@@ -14,6 +14,7 @@ const ROW_CONSTRAINT_PERCENTAGE: u16 = (100.0 / ROW_DISPLAY_COUNT as f32) as u16
 fn map_idx_to_time(index: usize) -> usize {
     index + 7
 }
+const DAYS: [&str; 5] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 fn get_color(sub: &Subject, c_list: &Vec<(String, Color)>) -> Color {
     for i in c_list {
@@ -62,6 +63,10 @@ impl Widget for &App {
     // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
     // - https://github.com/ratatui/ratatui/tree/master/examples
     fn render(self, area: Rect, buf: &mut Buffer) {
+        let base_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(5), Constraint::Percentage(95)])
+            .split(area);
         let columns_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints({
@@ -71,7 +76,17 @@ impl Widget for &App {
                 }
                 constraints
             })
-            .split(area);
+            .split(base_layout[1]);
+        let days_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints({
+                let mut constraints = Vec::new();
+                for _ in 0..5 {
+                    constraints.push(Constraint::Percentage(20));
+                }
+                constraints
+            })
+            .split(base_layout[0]);
 
         let mut rows_layout: Vec<_> = Vec::new();
         for column in 0..columns_layout.len() {
@@ -93,6 +108,14 @@ impl Widget for &App {
                 .block(Block::default().borders(Borders::ALL))
                 .fg(Color::DarkGray)
                 .render(*col, buf);
+        }
+
+        for day in 0..5 {
+            Paragraph::new(DAYS[day])
+                .block(Block::default().borders(Borders::RIGHT))
+                .alignment(Alignment::Center)
+                .fg(Color::White)
+                .render(days_layout[day], buf);
         }
 
         let blocks_grouped = group_by_time(&self.timetable_data);
@@ -127,6 +150,7 @@ impl Widget for &App {
                         .borders(Borders::ALL);
                     Paragraph::new(block.format_block())
                         .block(block_render)
+                        .fg(Color::White)
                         .render(split_area[b], buf);
                 }
             }

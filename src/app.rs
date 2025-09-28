@@ -137,9 +137,9 @@ impl App {
                                                 }
                                                 for sub in subjects {
                                                     let temp_color = Color::Rgb(
-                                                        rng.random::<u8>(),
-                                                        rng.random::<u8>(),
-                                                        rng.random::<u8>(),
+                                                        rng.random_range(50..=255),
+                                                        rng.random_range(100..=255),
+                                                        rng.random_range(0..=255),
                                                     );
                                                     colors_rand.push((sub, temp_color))
                                                 }
