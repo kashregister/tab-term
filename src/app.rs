@@ -6,7 +6,6 @@ use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     style::Color,
 };
-use std::path::Path;
 use ureq::Error;
 
 use serde_derive::Deserialize;
@@ -50,6 +49,16 @@ pub struct App {
     pub warning: Option<Warning>,
     pub config: Option<String>,
 }
+impl Default for Warning {
+    fn default() -> Self {
+        Warning {
+            message: "This is a warning".to_string(),
+            title: "Warning".to_string(),
+            bottom_hint: "Press <Esc> to close the window".to_string(),
+            color: Color::Yellow,
+        }
+    }
+}
 
 impl Default for App {
     fn default() -> Self {
@@ -64,6 +73,22 @@ impl Default for App {
         };
         init.events.send(AppEvent::Refresh);
         init
+    }
+}
+
+impl TimeBlock {
+    // TODO: Make the api trim the type
+    pub fn format_block(&self) -> String {
+        format!(
+            "{}\n\
+        {}\n\
+        Type: {}\n\
+        Loc: {}",
+            &self.professor,
+            &self.subject.name,
+            &self.subject.r#type.trim(),
+            &self.classroom,
+        )
     }
 }
 
@@ -112,9 +137,9 @@ impl App {
                                                 }
                                                 for sub in subjects {
                                                     let temp_color = Color::Rgb(
-                                                        rng.random::<u8>(),
-                                                        rng.random::<u8>(),
-                                                        rng.random::<u8>(),
+                                                        rng.random_range(50..=255),
+                                                        rng.random_range(100..=255),
+                                                        rng.random_range(0..=255),
                                                     );
                                                     colors_rand.push((sub, temp_color))
                                                 }
